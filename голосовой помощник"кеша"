@@ -1,0 +1,162 @@
+# Голосовой ассистент "Кеша" 1.0 beta
+import speech_recognition as st
+import pyttsx3
+import datetime
+import pyowm
+import json
+import os
+import webbrowser
+from tkinter import *
+
+
+def universal(t):
+    #В Функции мы отвечем пользователю.
+    greeting = pyttsx3.init()
+    greeting.say(t), print(t)
+    greeting.runAndWait()
+
+def kesha_assistant_commands():
+
+    kesha_command = """
+    Привет я 'Кеша'.
+    Вот что я могу:
+                   Сколько сейчас времени.
+                   Какой сегодня день.
+                   Какая погода.
+                   Написать письмо.
+                    """
+    universal(kesha_command)
+
+def show_time():
+    #'Кеша'говорит какое время сейчас.
+    v_time = datetime.datetime.today().strftime("%H:%M")
+    return v_time
+
+def to_open_the_browser(team_search):
+    #'Кеша'открывает браузер.
+    webbrowser.open_new('https://yandex.ru/search/?lr=10735&text={}'
+                        .format(team_search))
+
+def open_Notepad():
+    # 'Кеша'откроет блокнот.
+    pass
+
+def weather_now():
+    #'Кеша'говорит какая погода
+    owm = pyowm.OWM("b34dbfa5d957a1b6ede2e55f5919e3dd", language="ru")
+    city = 'Иваново'
+    w = owm.weather_at_place(city)
+    weather_city = w.get_weather()
+    rr = weather_city.get_temperature(unit='celsius')
+    yyuu = weather_city.get_detailed_status()
+    ooo = weather_city.get_wind()
+    rtt = weather_city.get_humidity ()
+
+
+    return "Сегодня {0},теппература {1},влажность {3}%,скорость ветра {2} метров в секунду".\
+        format(yyuu,int(rr["temp"]),int(ooo["speed"]),rtt)
+
+
+def email():
+    #'Кеша'работает с почтой.
+    return "Даная фунция ище в разработке"
+
+def what_date():
+    # 'Кеша'говорит какой день недели.
+
+    #Распозднаем какой день недели.
+    weekday = {"Monday":"Понедельник","Tuesday":"Вторник","Wednesday":"Среда","Thursday":"Четверг"
+               ,"Friday":"Пятница","Saturday":"Суббота","resurrection":"Воскресение"}
+    # Распозднаем какой месяц.
+    month = {"January":"Января","February":"Февраля","March":"Марта","April":"Апреля","May":"Майя"
+             ,"June":"Июня","July":"Июля","August":"Августа","September":"Сентября","October":"Октября"
+             ,"November":"Ноября","December":"Декабря"}
+
+    dn_time = datetime.datetime.today().strftime("%A")
+    d_time = datetime.datetime.today().strftime("%d")
+    m_time = datetime.datetime.today().strftime("%B")
+    g_time =datetime.datetime.today().strftime("%Y")
+
+    rr = weekday[dn_time]+" "+d_time +" "+month[m_time]+" "+g_time +" года"
+
+    return rr
+
+owner_name = ""  # Имя владельца ассистента.
+try:
+    file_mane = "_mane.json"
+    with open(file_mane) as f:
+        owner_name = json.load(f)
+except FileNotFoundError:
+    owner_name = ""
+
+
+text_greeting = "Привет меня зовут 'Кеша' я твой голосовой помошник\n" \
+                "А тебя как зовут?"
+text_greeting_ = "Привет {0}, чем я тебе могу помочь?".format(owner_name)
+
+command_time = ["сколько сейчас времени","скажи сколько времени","время","точное время"]
+command_date = ["какое сегодня число","какой день недели","день недели"]
+open_browser = ["открыть браузер","браузер","интернет","найди","найди в интернете"]
+weather = ["погода"]
+email_ = ["давай напишем письмо","написать письмо","почта"]
+assistant_commands = ["кеша","кешуня","кеш"]
+
+
+
+if owner_name == "":
+
+    universal(text_greeting)
+
+    den = st.Recognizer()
+    with st.Microphone(device_index=1) as denis:
+        audio = den.listen(denis)
+
+        morozov_ = den.recognize_google(audio, language="ru-Ru")
+        owner_name = morozov_.lower()
+        #Имя владельща ассистента записываем в файл форматом json.
+        file_mane = "_mane.json"
+        with open(file_mane, "w", encoding='utf-8')as ewq:
+            json.dump(owner_name, ewq)
+else:
+
+    greeting = pyttsx3.init()
+    greeting.say(text_greeting_), print(text_greeting_)
+    greeting.runAndWait()
+
+    den = st.Recognizer()
+    with st.Microphone(device_index=1) as denis:
+        audio = den.listen(denis)
+
+        morozov = den.recognize_google(audio, language="ru-Ru")
+        team_search = morozov.lower()
+        print(team_search)
+
+    if team_search in assistant_commands:
+        kesha_assistant_commands()
+    elif team_search in command_time:
+        universal("Сейчас " + show_time())
+    elif team_search in command_date:
+        universal("Сегодня " + what_date())
+    elif team_search in weather:
+        universal(weather_now())
+    elif team_search in open_browser:
+        universal("Что ты хочешь найти в интернете?")
+
+        den = st.Recognizer()
+        with st.Microphone(device_index=1) as denis:
+            audio = den.listen(denis)
+        try:
+            morozov_open = den.recognize_google(audio, language="ru-Ru")
+            team_search = morozov_open.lower()
+            print(team_search)
+            to_open_the_browser(team_search)
+        except:
+            print("Ошибка")
+    elif team_search in email_:
+        kesha_email = email()
+        universal(kesha_email)
+
+    else:
+        universal("Немогу понять команду")
+
+
